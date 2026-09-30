@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.env
+
+# Credentials / secrets
+credentials/
+*.json
+service-account.json
+secrets/
+*.pem
+*.key
+
+# Local databases / exports
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS
+Thumbs.db
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Local generated runtime data
+automation/logs/
+automation/alerts/
+automation/run_logs/
+
+# Sensitive/raw operational data
+03_Data/Raw/
+03_Data/Cleaned/
+
+# Generated monthly output
+output/
+
+# Local credentials/config
+config.local.*

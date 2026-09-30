@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product Performance Report</title>
+<style>
+:root{--bg:#f6f7f9;--panel:#fff;--ink:#1c2230;--muted:#5d6678;--line:#e2e5eb;--head:#f0f2f5;--accent:#2f5fd0;
+--pass:#1f7a4d;--pass-bg:#e3f4ea;--rev:#b3261e;--rev-bg:#fce8e6;--warn:#8a5a00;--warn-bg:#fff4d6;--info:#2f5fd0;--info-bg:#e6edfb;--hl:#fff8e1}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#11141a;--panel:#1a1e27;--ink:#e6e9ef;--muted:#9aa3b5;--line:#2c3240;--head:#222834;--accent:#7ea2ff;
+--pass:#6fd39c;--pass-bg:#16301f;--rev:#ff8a80;--rev-bg:#3a1a18;--warn:#ffcc66;--warn-bg:#352a10;--info:#9db8ff;--info-bg:#1b2540;--hl:#2e2912}}
+:root[data-theme="dark"]{--bg:#11141a;--panel:#1a1e27;--ink:#e6e9ef;--muted:#9aa3b5;--line:#2c3240;--head:#222834;--accent:#7ea2ff;
+--pass:#6fd39c;--pass-bg:#16301f;--rev:#ff8a80;--rev-bg:#3a1a18;--warn:#ffcc66;--warn-bg:#352a10;--info:#9db8ff;--info-bg:#1b2540;--hl:#2e2912}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:16px 24px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between}
+h1{font-size:20px;margin:0}
+.sub{color:var(--muted);font-size:13px}
+.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+select,input[type=search]{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+input[type=search]{min-width:220px}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-weight:600;font-size:12px}
+.b-PASS{background:var(--pass-bg);color:var(--pass)}.b-REVIEW{background:var(--rev-bg);color:var(--rev)}
+.b-Excluded{background:var(--rev-bg);color:var(--rev)}.b-Flagged,.b-Highlight{background:var(--warn-bg);color:var(--warn)}.b-Review{background:var(--info-bg);color:var(--info)}
+nav{display:flex;gap:4px;padding:0 24px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{font:inherit;border:0;background:none;color:var(--muted);padding:10px 12px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+nav button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+main{padding:20px 24px;max-width:1500px;margin:0 auto}
+section{display:none}section.on{display:block}
+h2{font-size:16px;margin:4px 0 12px}
+h3{font-size:14px;margin:20px 0 8px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.kpi .l{color:var(--muted);font-size:12px}.kpi .v{font-size:20px;font-weight:650;margin-top:2px;font-variant-numeric:tabular-nums}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:16px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{background:var(--head);font-weight:600;cursor:pointer;user-select:none;position:sticky;top:0}
+th.n,td.n{text-align:right}
+th .ar{color:var(--muted);font-size:11px}
+tr.hl td{background:var(--hl)}
+td.wrap{white-space:normal;min-width:260px}
+.pos{color:var(--pass)}.neg{color:var(--rev)}.mut{color:var(--muted)}
+.pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;padding:8px 0;color:var(--muted);font-size:13px}
+.pager button{font:inherit;padding:4px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);cursor:pointer}
+.pager button:disabled{opacity:.4;cursor:default}
+ul.notes{margin:0;padding-left:18px}ul.notes li{margin:6px 0}
+.note{color:var(--muted);font-size:13px;margin:6px 0 12px}
+details summary{cursor:pointer;color:var(--accent)}
+@media (max-width:640px){header,main{padding-left:16px;padding-right:16px}nav{padding:0 8px}input[type=search]{min-width:0;width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Product Performance Automation</h1>
+    <div class="sub" id="subline"></div>
+  </div>
+  <div class="ctl">
+    <label>Month <select id="month"></select></label>
+    <label>PH <select id="ph"></select></label>
+    <label>Product Category <select id="cat"></select></label>
+    <span id="status" class="badge"></span>
+  </div>
+</header>
+<nav id="tabs"></nav>
+<main>
+  <section id="t-overview">
+    <h2>Summary <span class="mut" id="ov-month"></span></h2>
+    <div class="kpis" id="kpis"></div>
+    <div class="card"><h3 style="margin-top:0">Validation for this month</h3><div id="ov-recon"></div></div>
+    <div class="card"><h3 style="margin-top:0">Exceptions for this month</h3><div id="ov-exc"></div></div>
+  </section>
+  <section id="t-amazon"><h2>Report 1: Amazon</h2><div class="note">SKUs as sold (single, pack and combo kept as their own SKUs). No quantity conversion; Sales Amount is the marketplace line total. Highlighted rows moved more than ±50% month on month.</div><div class="note" id="amazon-ph-note"></div><div id="tb-amazon"></div></section>
+  <section id="t-ebay"><h2>Report 2: eBay</h2><div class="note">SKUs as sold. No quantity conversion; Sales Amount is the marketplace line total. Highlighted rows moved more than ±50% month on month.</div><div id="tb-ebay"></div></section>
+  <section id="t-bq"><h2>Report 3: B&amp;Q</h2><div class="note">SKUs as sold. No quantity conversion; Sales Amount is the marketplace line total. Highlighted rows moved more than ±50% month on month.</div><div id="tb-bq"></div></section>
+  <section id="t-r4"><h2>Report 4: Single SKU Units</h2><div class="note">Units only, no sales amounts. Packs = Qty × Pack Size; combos split into components (Combo Qty × Component Qty). Avg Daily Units = Total Units ÷ days in month.</div><div class="note" id="r4-ph-note"></div><div id="tb-r4"></div></section>
+  <section id="t-ph"><h2>PH View: Amazon ownership <span class="mut" id="ph-month"></span></h2>
+    <div class="note">PH (Portfolio Holder) is an extra reporting dimension on Amazon lines already in Report 1. Each ASIN takes its PH from the approved allocation (ledsone staff master = sheet “Master Amazon UK 3rd Cycle”). Quantities, sales and units are not changed; ASINs without an allocation stay in the totals under <b>(No PH)</b>. Click a PH to filter the whole report.</div>
+    <h3>PH summary</h3><div id="tb-phsum"></div>
+    <h3>PH → ASIN → SKU drill-down</h3><div id="tb-phasin"></div></section>
+  <section id="t-audit"><h2>Conversion audit trail</h2><div class="note">How pack and combo sales became single units in Report 4.</div>
+    <h3>Combo breakdown</h3><div id="tb-combo"></div><h3>Pack conversion</h3><div id="tb-pack"></div></section>
+  <section id="t-exc"><h2>Exceptions</h2><div id="tb-exc"></div></section>
+  <section id="t-recon"><h2>Reconciliation</h2>
+    <h3>Reports 1 to 3: Raw − Exceptions = Report</h3><div id="tb-rc13"></div>
+    <h3>Report 4: Total Units = Singles + (Pack Qty × Pack Size) + (Combo Qty × Component Qty)</h3><div id="tb-rc4"></div>
+    <h3>PH (Amazon): PH + (No PH) = Report 1 Amazon and Report 4 Amazon Units</h3><div id="tb-rcph"></div>
+    <h3>PH validation: all allocated ASINs checked against UK listing_data and the product master</h3><div id="tb-phval"></div>
+    <h3>Raw extracts</h3><div id="tb-raw"></div></section>
+  <section id="t-scope"><h2>Scope, sources &amp; assumptions</h2>
+    <div class="card"><h3 style="margin-top:0">Data sources</h3><ul class="notes" id="sources"></ul></div>
+    <div class="card"><h3 style="margin-top:0">Assumptions / open questions</h3><ul class="notes" id="assump"></ul></div>
+    <h3>Order lines outside report scope (all statuses and regions, for transparency)</h3><div id="tb-scope"></div></section>
+</main>
+<script>
+const D=/*__DATA__*/null;
+const M=D.meta, $=s=>document.querySelector(s);
+const fmtInt=v=>v==null?'–':Math.round(v).toLocaleString('en-GB');
+const fmtGBP=v=>v==null?'–':'£'+Number(v).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtDec=v=>v==null?'–':Number(v).toLocaleString('en-GB',{minimumFractionDigits:1,maximumFractionDigits:2});
+const fmtPct=v=>v==null?'<span class="mut">n/a</span>':`<span class="${v>0?'pos':v<0?'neg':''}">${v>0?'+':''}${v.toFixed(1)}%</span>`;
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const FMT={int:fmtInt,gbp:fmtGBP,dec:fmtDec,pct:fmtPct,text:v=>esc(v),badge:v=>`<span class="badge b-${esc(v)}">${esc(v)}</span>`};
+let month=M.report_month, ph='', cat='';
+// Product Category: filter data only (SKU -> category from order_transaction.category_name; conflicts / missing kept as their own values)
+const CAT=s=>(D.sku_cat[s]||['Category Not Available'])[0];
+
+function table(el,{cols,rows,filters=[],page=50,rowClass,search=true,sort}){
+  const st={q:'',sc:sort?sort[0]:null,sd:sort?sort[1]:-1,p:0,f:{}};
+  el.innerHTML='';
+  const bar=document.createElement('div');bar.className='bar';el.appendChild(bar);
+  if(search){const i=document.createElement('input');i.type='search';i.placeholder='Search…';i.oninput=()=>{st.q=i.value.toLowerCase();st.p=0;draw()};bar.appendChild(i)}
+  filters.forEach(f=>{const s=document.createElement('select');const vals=[...new Set(rows.map(f.get))].filter(v=>v!==''&&v!=null).sort();
+    s.innerHTML=`<option value="">${esc(f.label)}: all</option>`+vals.map(v=>`<option>${esc(v)}</option>`).join('');
+    s.onchange=()=>{st.f[f.label]=s.value;st.p=0;draw()};bar.appendChild(s)});
+  const cnt=document.createElement('span');cnt.className='mut';bar.appendChild(cnt);
+  const tw=document.createElement('div');tw.className='tw';el.appendChild(tw);
+  const pg=document.createElement('div');pg.className='pager';el.appendChild(pg);
+  function draw(){
+    let r=rows.filter(x=>filters.every(f=>!st.f[f.label]||String(f.get(x))===st.f[f.label]));
+    if(st.q)r=r.filter(x=>cols.some(c=>String(c.get(x)??'').toLowerCase().includes(st.q)));
+    if(st.sc!=null){const g=cols[st.sc].get;r=[...r].sort((a,b)=>{const x=g(a),y=g(b);if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return -1;return (x<y?-1:x>y?1:0)*st.sd})}
+    const n=r.length,pages=Math.max(1,Math.ceil(n/page));st.p=Math.min(st.p,pages-1);
+    cnt.textContent=`${n.toLocaleString('en-GB')} row${n===1?'':'s'}`;
+    const vis=r.slice(st.p*page,st.p*page+page);
+    tw.innerHTML='<table><thead><tr>'+cols.map((c,i)=>`<th class="${c.n?'n':''}" data-i="${i}">${esc(c.label)} <span class="ar">${st.sc===i?(st.sd>0?'▲':'▼'):''}</span></th>`).join('')+'</tr></thead><tbody>'+
+      (vis.length?vis.map(x=>`<tr class="${rowClass?rowClass(x):''}">`+cols.map(c=>`<td class="${c.n?'n':''} ${c.wrap?'wrap':''}">${(FMT[c.f||'text'])(c.get(x))}</td>`).join('')+'</tr>').join(''):`<tr><td colspan="${cols.length}" class="mut">No rows.</td></tr>`)+'</tbody></table>';
+    tw.querySelectorAll('th').forEach(th=>th.onclick=()=>{const i=+th.dataset.i;st.sd=st.sc===i?-st.sd:(cols[i].n?-1:1);st.sc=i;draw()});
+    pg.innerHTML=pages>1?`<button ${st.p?'':'disabled'}>‹ Prev</button> Page ${st.p+1} of ${pages} <button ${st.p<pages-1?'':'disabled'}>Next ›</button>`:'';
+    const b=pg.querySelectorAll('button');if(b.length){b[0].onclick=()=>{st.p--;draw()};b[1].onclick=()=>{st.p++;draw()}}
+  }
+  draw();
+}
+
+const R13C=[
+ {label:'Month',get:r=>M.month_labels[r[0]]},
+ {label:'SKU (as sold)',get:r=>r[2]},
+ {label:'SKU Type',get:r=>r[3]},
+ {label:'Mapped product SKU',get:r=>r[16]||''},
+ {label:'Pack Size',get:r=>r[3]==='Pack'?r[4]:null,f:'int',n:1},
+ {label:'Quantity Sold',get:r=>r[5],f:'int',n:1},
+ {label:'Sales Amount',get:r=>r[6],f:'gbp',n:1},
+ {label:'Avg Price',get:r=>r[7],f:'gbp',n:1},
+ {label:'Prev Qty',get:r=>r[8],f:'int',n:1},
+ {label:'Qty MoM %',get:r=>r[10],f:'pct',n:1},
+ {label:'Prev Sales',get:r=>r[9],f:'gbp',n:1},
+ {label:'Sales MoM %',get:r=>r[11],f:'pct',n:1},
+ {label:'Marketplace IDs',get:r=>r[14]}];
+const R13F=[{label:'SKU Type',get:r=>r[3]},{label:'Movement',get:r=>r[12]?'> ±50% MoM':'Normal'}];
+
+function render(){
+  const mo=month, ml=M.month_labels[mo];
+  $('#subline').textContent=`Reporting month ${M.month_labels[M.report_month]} · Marketplaces: Amazon, eBay, B&Q (UK, GBP) · Generated ${M.generated} · Test window ${M.months.map(m=>M.month_labels[m]).join(', ')}`;
+  const rc13=D.recon13.filter(r=>r.month===mo), rc4=D.recon4.filter(r=>r.month===mo);
+  const rcph=D.recon_ph.filter(r=>r.month===mo);
+  const mst=[...rc13,...rc4,...rcph].every(r=>r.status==='PASS')?'PASS':'REVIEW';
+  const s=$('#status');s.className='badge b-'+mst;s.textContent=(mst==='PASS'?'Validated · ':'REVIEW · ')+ml;
+  // KPIs
+  const by=mp=>rc13.find(r=>r.mp===mp)||{rep_qty:0,rep_sales:0};
+  const r4m=D.r4.filter(r=>r[0]===mo), ex=D.exc.filter(e=>e.month===mo&&(!ph||e.ph===ph));
+  const skus=new Set(D.r13.filter(r=>r[0]===mo).map(r=>r[1]+'|'+r[2])).size;
+  $('#ov-month').textContent='· '+ml+(ph?' · PH '+ph:'');
+  let k;
+  if(ph){  // PH scope: Amazon only, from the same PH datasets the PH tables use (ph_r1 / ph_r4 / ph_month)
+    const p1=D.ph_r1.filter(r=>r[0]===mo&&r[1]===ph), p4=D.ph_r4.filter(r=>r[0]===mo&&r[1]===ph);
+    const pm=D.ph_month.find(r=>r[0]===mo&&r[1]===ph)||[mo,ph,0,0,null,null,null,null];
+    const q=p1.reduce((a,r)=>a+r[5],0), s=p1.reduce((a,r)=>a+r[6],0), am=by('Amazon');
+    k=[['Amazon Units (PH)',fmtInt(q)],['Amazon Sales (PH)',fmtGBP(s)],
+      ['Amazon Units MoM % (PH)',fmtPct(pm[6])+` <span class="mut" style="font-size:12px">prev ${fmtInt(pm[4])}</span>`],
+      ['Amazon Sales MoM % (PH)',fmtPct(pm[7])+` <span class="mut" style="font-size:12px">prev ${fmtGBP(pm[5])}</span>`],
+      ['Share of Amazon Units',am.rep_qty?(q/am.rep_qty*100).toFixed(1)+'%':'–'],['Share of Amazon Sales',am.rep_sales?(s/am.rep_sales*100).toFixed(1)+'%':'–'],
+      ['SKUs sold (PH, Amazon)',fmtInt(new Set(p1.map(r=>r[2])).size)],['ASINs sold (PH)',fmtInt(new Set(D.ph_asin.filter(r=>r[0]===mo&&r[1]===ph).map(r=>r[2])).size)],
+      ['Single SKUs (Report 4, PH)',fmtInt(p4.length)],['Single units (PH Amazon)',fmtInt(p4.reduce((a,r)=>a+r[3],0))],
+      ['PH + SKU rows > ±50% MoM',fmtInt(p1.filter(r=>r[13]).length)],
+      ['Exceptions (PH, excl. movement)',fmtInt(ex.filter(e=>!e.type.startsWith('Unusual')).length)],
+      ['eBay Units (all – not PH)',fmtInt(by('eBay').rep_qty)],['B&Q Units (all – not PH)',fmtInt(by('B&Q').rep_qty)],
+      ['eBay Sales (all – not PH)',fmtGBP(by('eBay').rep_sales)],['B&Q Sales (all – not PH)',fmtGBP(by('B&Q').rep_sales)]];
+  } else
+  k=[['Amazon Units',fmtInt(by('Amazon').rep_qty)],['eBay Units',fmtInt(by('eBay').rep_qty)],['B&Q Units',fmtInt(by('B&Q').rep_qty)],
+    ['Total Units sold',fmtInt(rc13.reduce((a,r)=>a+r.rep_qty,0))],
+    ['Amazon Sales',fmtGBP(by('Amazon').rep_sales)],['eBay Sales',fmtGBP(by('eBay').rep_sales)],['B&Q Sales',fmtGBP(by('B&Q').rep_sales)],
+    ['Total Sales',fmtGBP(rc13.reduce((a,r)=>a+r.rep_sales,0))],
+    ['SKUs sold (marketplace × SKU)',fmtInt(skus)],['Single SKUs (Report 4)',fmtInt(r4m.length)],
+    ['Single units (Report 4)',fmtInt(r4m.reduce((a,r)=>a+r[5],0))],
+    ['Exceptions (excl. movement)',fmtInt(ex.filter(e=>!e.type.startsWith('Unusual')).length)],
+    ['Rows > ±50% MoM',fmtInt(ex.filter(e=>e.type.startsWith('Unusual')).length)],
+    ['Amazon Units with a PH',rcph.length?fmtInt(rcph[0].ph_qty)+' · '+rcph[0].phs_with_sales+' PHs':'–'],
+    ['Amazon Units with no PH',rcph.length?fmtInt(rcph[0].noph_qty)+' · '+fmtGBP(rcph[0].noph_sales):'–']];
+  $('#kpis').innerHTML=k.map(([l,v])=>`<div class="kpi"><div class="l">${esc(l)}</div><div class="v">${v}</div></div>`).join('');
+  $('#ov-recon').innerHTML='<div class="tw"><table><thead><tr><th>Check</th><th>Marketplace</th><th class="n">Expected</th><th class="n">Report</th><th class="n">Difference</th><th>Status</th></tr></thead><tbody>'+
+    rc13.map(r=>`<tr><td>Reports 1–3 quantity</td><td>${r.mp}</td><td class="n">${fmtInt(r.raw_qty-r.exc_qty)}</td><td class="n">${fmtInt(r.rep_qty)}</td><td class="n">${fmtInt(r.diff_qty)}</td><td>${FMT.badge(r.status)}</td></tr>
+      <tr><td>Reports 1–3 sales</td><td>${r.mp}</td><td class="n">${fmtGBP(r.raw_sales-r.exc_sales)}</td><td class="n">${fmtGBP(r.rep_sales)}</td><td class="n">${fmtGBP(r.diff_sales)}</td><td>${FMT.badge(r.status)}</td></tr>`).join('')+
+    rc4.map(r=>`<tr><td>Report 4 units</td><td>${r.mp}</td><td class="n">${fmtInt(r.expected)}</td><td class="n">${fmtInt(r.report4)}</td><td class="n">${fmtInt(r.diff)}</td><td>${FMT.badge(r.status)}</td></tr>`).join('')+
+    rcph.map(r=>`<tr><td>PH + (No PH) = Report 1 quantity</td><td>Amazon</td><td class="n">${fmtInt(r.r1_qty)}</td><td class="n">${fmtInt(r.ph_qty+r.noph_qty)}</td><td class="n">${fmtInt(r.diff_qty)}</td><td>${FMT.badge(r.status)}</td></tr>
+      <tr><td>PH + (No PH) = Report 1 sales</td><td>Amazon</td><td class="n">${fmtGBP(r.r1_sales)}</td><td class="n">${fmtGBP(r.ph_sales+r.noph_sales)}</td><td class="n">${fmtGBP(r.diff_sales)}</td><td>${FMT.badge(r.status)}</td></tr>
+      <tr><td>PH + (No PH) = Report 4 Amazon Units</td><td>Amazon</td><td class="n">${fmtInt(r.r4_amazon)}</td><td class="n">${fmtInt(r.ph_units+r.noph_units)}</td><td class="n">${fmtInt(r.diff_units)}</td><td>${FMT.badge(r.status)}</td></tr>`).join('')+'</tbody></table></div>';
+  const g={};ex.forEach(e=>{const k=e.type+'|'+e.status;g[k]=g[k]||{t:e.type,s:e.status,n:0,q:0,v:0,mp:{}};g[k].n++;g[k].q+=e.qty;g[k].v+=e.sales;g[k].mp[e.mp]=(g[k].mp[e.mp]||0)+1});
+  $('#ov-exc').innerHTML='<div class="tw"><table><thead><tr><th>Exception type</th><th>Status</th><th class="n">Rows</th><th>By marketplace</th><th class="n">Qty</th><th class="n">Sales</th></tr></thead><tbody>'+
+    (Object.values(g).sort((a,b)=>b.n-a.n).map(x=>`<tr><td>${esc(x.t)}</td><td>${FMT.badge(x.s)}</td><td class="n">${fmtInt(x.n)}</td><td>${Object.entries(x.mp).map(([m,n])=>esc(m)+' '+n).join(' · ')}</td><td class="n">${fmtInt(x.q)}</td><td class="n">${fmtGBP(x.v)}</td></tr>`).join('')||'<tr><td colspan="6" class="mut">None</td></tr>')+'</tbody></table></div>';
+  // marketplace reports
+  [['eBay','#tb-ebay'],['B&Q','#tb-bq'],...(ph?[]:[['Amazon','#tb-amazon']])].forEach(([mp,id])=>
+    table($(id),{cols:R13C,rows:D.r13.filter(r=>r[1]===mp&&r[0]===mo),filters:R13F,rowClass:r=>r[12]?'hl':'',sort:[5,-1]}));
+  $('#amazon-ph-note').innerHTML=ph?`Showing PH <b>${esc(ph)}</b>: PH + Month + SKU rows (a SKU sold through ASINs of several PHs appears once per PH; nothing is duplicated). Choose “All PHs” for the full Report 1.`:'PH filter: All PHs. Choose a PH in the header to see its PH + SKU rows.';
+  $('#r4-ph-note').innerHTML=ph?`Showing PH <b>${esc(ph)}</b>: <b>Amazon Units (PH)</b> come from this PH’s ASINs. eBay, B&amp;Q, Total and Avg Daily Units are the SKU’s unchanged all-marketplace figures; they are not PH-attributed.`:'PH filter: All PHs.';
+  if(ph){
+    table($('#tb-amazon'),{rows:D.ph_r1.filter(r=>r[0]===mo&&r[1]===ph),sort:[5,-1],rowClass:r=>r[13]?'hl':'',
+      filters:[{label:'SKU Type',get:r=>r[3]},{label:'Movement',get:r=>r[13]?'> ±50% MoM':'Normal'}],cols:[
+      {label:'Month',get:r=>M.month_labels[r[0]]},{label:'PH',get:r=>r[1]},{label:'SKU (as sold)',get:r=>r[2]},{label:'SKU Type',get:r=>r[3]},
+      {label:'Pack Size',get:r=>r[3]==='Pack'?r[4]:null,f:'int',n:1},{label:'Quantity Sold',get:r=>r[5],f:'int',n:1},{label:'Sales Amount',get:r=>r[6],f:'gbp',n:1},
+      {label:'Avg Price',get:r=>r[5]?Math.round(r[6]/r[5]*100)/100:null,f:'gbp',n:1},
+      {label:'Prev Qty',get:r=>r[9],f:'int',n:1},{label:'Qty MoM %',get:r=>r[11],f:'pct',n:1},
+      {label:'Prev Sales',get:r=>r[10],f:'gbp',n:1},{label:'Sales MoM %',get:r=>r[12],f:'pct',n:1},
+      {label:'ASINs',get:r=>r[7],f:'int',n:1},{label:'ASIN list',get:r=>r[8]}]});
+    table($('#tb-r4'),{rows:D.ph_r4.filter(r=>r[0]===mo&&r[1]===ph&&(!cat||CAT(r[2])===cat)),sort:[4,-1],cols:[
+      {label:'Month',get:r=>M.month_labels[r[0]]},{label:'PH',get:r=>r[1]},{label:'Single SKU',get:r=>r[2]},{label:'Product Category',get:r=>CAT(r[2])},
+      {label:'Amazon Units (PH)',get:r=>r[3],f:'int',n:1},{label:'eBay Units (all)',get:r=>r[4],f:'int',n:1},{label:'B&Q Units (all)',get:r=>r[5],f:'int',n:1},
+      {label:'Total Units (all)',get:r=>r[6],f:'int',n:1},{label:'Avg Daily Units (all)',get:r=>r[7],f:'dec',n:1},
+      {label:'PH Amazon Avg Daily',get:r=>Math.round(r[3]/M.days[r[0]]*100)/100,f:'dec',n:1},{label:'Amazon Units (all PHs)',get:r=>r[8],f:'int',n:1}]});
+  } else
+  table($('#tb-r4'),{rows:D.r4.filter(r=>r[0]===mo&&(!cat||CAT(r[1])===cat)),sort:[6,-1],cols:[
+    {label:'Month',get:r=>M.month_labels[r[0]]},{label:'Single SKU',get:r=>r[1]},{label:'Product Category',get:r=>CAT(r[1])},
+    {label:'Amazon Units',get:r=>r[2],f:'int',n:1},{label:'eBay Units',get:r=>r[3],f:'int',n:1},{label:'B&Q Units',get:r=>r[4],f:'int',n:1},
+    {label:'Total Units',get:r=>r[5],f:'int',n:1},{label:'Avg Daily Units',get:r=>r[6],f:'dec',n:1},
+    {label:'Prev Total Units',get:r=>r[7],f:'int',n:1},{label:'Units MoM %',get:r=>r[8],f:'pct',n:1}],
+    filters:[{label:'Sold on',get:r=>[r[2]?'Amazon':'',r[3]?'eBay':'',r[4]?'B&Q':''].filter(Boolean).join(' + ')}]});
+  const tr=[{label:'Month',get:r=>M.month_labels[r[0]]},{label:'Marketplace',get:r=>r[1]}];
+  table($('#tb-combo'),{rows:D.combo.filter(r=>r[0]===mo),sort:[6,-1],filters:[{label:'Marketplace',get:r=>r[1]}],cols:[...tr,
+    {label:'Combo SKU',get:r=>r[2]},{label:'Component SKU',get:r=>r[3]},{label:'Combo Qty Sold',get:r=>r[4],f:'int',n:1},
+    {label:'Qty in Combo',get:r=>r[4]?r[5]/r[4]:null,f:'int',n:1},{label:'Units Added',get:r=>r[5],f:'int',n:1}]});
+  table($('#tb-pack'),{rows:D.pack.filter(r=>r[0]===mo),sort:[6,-1],filters:[{label:'Marketplace',get:r=>r[1]}],cols:[...tr,
+    {label:'Pack SKU',get:r=>r[2]},{label:'Single SKU',get:r=>r[3]},{label:'Pack Qty Sold',get:r=>r[4],f:'int',n:1},
+    {label:'Pack Size',get:r=>r[4]?r[5]/r[4]:null,f:'int',n:1},{label:'Units Added',get:r=>r[5],f:'int',n:1}]});
+  table($('#tb-exc'),{rows:D.exc.filter(e=>e.month===mo&&(!ph||e.ph===ph)),sort:[6,-1],cols:[
+    {label:'Exception type',get:e=>e.type},{label:'Marketplace',get:e=>e.mp},{label:'Month',get:e=>M.month_labels[e.month]},
+    {label:'ID',get:e=>e.id},{label:'SKU',get:e=>e.sku},{label:'Qty',get:e=>e.qty,f:'int',n:1},{label:'Sales (£)',get:e=>e.sales,f:'gbp',n:1},
+    {label:'Details',get:e=>e.details,wrap:1},{label:'Impact',get:e=>e.impact,wrap:1},{label:'Status',get:e=>e.status,f:'badge'}],
+    filters:[{label:'Type',get:e=>e.type},{label:'Marketplace',get:e=>e.mp},{label:'Status',get:e=>e.status}]});
+  const all=D.recon13;  // reconciliation shows every test month
+  table($('#tb-rc13'),{rows:all,search:false,page:100,cols:[{label:'Month',get:r=>M.month_labels[r.month]},{label:'Report',get:r=>r.mp},
+    {label:'Raw lines',get:r=>r.raw_rows,f:'int',n:1},{label:'Raw Qty',get:r=>r.raw_qty,f:'int',n:1},{label:'Exception Qty',get:r=>r.exc_qty,f:'int',n:1},
+    {label:'Report Qty',get:r=>r.rep_qty,f:'int',n:1},{label:'Qty Diff',get:r=>r.diff_qty,f:'int',n:1},
+    {label:'Raw Sales',get:r=>r.raw_sales,f:'gbp',n:1},{label:'Exception Sales',get:r=>r.exc_sales,f:'gbp',n:1},
+    {label:'Report Sales',get:r=>r.rep_sales,f:'gbp',n:1},{label:'Sales Diff',get:r=>r.diff_sales,f:'gbp',n:1},{label:'Status',get:r=>r.status,f:'badge'}]});
+  table($('#tb-rc4'),{rows:D.recon4,search:false,page:100,cols:[{label:'Month',get:r=>M.month_labels[r.month]},{label:'Marketplace',get:r=>r.mp},
+    {label:'Single units',get:r=>r.singles,f:'int',n:1},{label:'Pack units (Qty × Size)',get:r=>r.pack_units,f:'int',n:1},
+    {label:'Combo units (Qty × Comp Qty)',get:r=>r.combo_units,f:'int',n:1},{label:'Expected total',get:r=>r.expected,f:'int',n:1},
+    {label:'Report 4 total',get:r=>r.report4,f:'int',n:1},{label:'Diff',get:r=>r.diff,f:'int',n:1},
+    {label:'Combo qty left out (no components)',get:r=>r.combo_excluded_qty,f:'int',n:1},{label:'Status',get:r=>r.status,f:'badge'}]});
+  // PH View
+  $('#ph-month').textContent='· '+ml+(ph?' · '+ph:'');
+  const amzQ=D.recon_ph.find(r=>r.month===mo)||{r1_qty:0};
+  table($('#tb-phsum'),{rows:D.ph_valid,page:40,sort:[5,-1],rowClass:v=>v.ph===ph?'hl':'',cols:[
+    {label:'PH',get:v=>v.ph},{label:'Allocated ASINs',get:v=>v.allocated,f:'int',n:1},{label:'ASINs valid SKU',get:v=>v.ok+v.ok_variant,f:'int',n:1},
+    {label:'ASIN issues',get:v=>v.missing_sku+v.multi_sku+v.not_found,f:'int',n:1},{label:'ASINs sold',get:v=>v[mo].asins,f:'int',n:1},
+    {label:'Amazon Qty',get:v=>v[mo].qty,f:'int',n:1},{label:'Amazon Sales',get:v=>v[mo].sales,f:'gbp',n:1},
+    {label:'Share of Amazon Qty',get:v=>amzQ.r1_qty?Math.round(v[mo].qty/amzQ.r1_qty*1000)/10:null,f:'dec',n:1},
+    {label:'Amazon single units (R4)',get:v=>v[mo].units,f:'int',n:1}]});
+  table($('#tb-phasin'),{rows:D.ph_asin.filter(r=>r[0]===mo&&(!ph||r[1]===ph)),sort:[5,-1],
+    filters:[...(ph?[]:[{label:'PH',get:r=>r[1]}]),{label:'ASIN check',get:r=>r[8]},{label:'SKU Type',get:r=>r[4]}],cols:[
+    {label:'PH',get:r=>r[1]},{label:'ASIN',get:r=>r[2]},{label:'SKU (as sold)',get:r=>r[3]},{label:'SKU Type',get:r=>r[4]},
+    {label:'Qty',get:r=>r[5],f:'int',n:1},{label:'Sales',get:r=>r[6],f:'gbp',n:1},{label:'Mapped product SKU',get:r=>r[7]===r[3]?'':r[7]},
+    {label:'ASIN allocation check',get:r=>r[8]}]});
+  table($('#tb-rcph'),{rows:D.recon_ph,search:false,page:100,cols:[{label:'Month',get:r=>M.month_labels[r.month]},
+    {label:'Report 1 Amazon Qty',get:r=>r.r1_qty,f:'int',n:1},{label:'PH Qty',get:r=>r.ph_qty,f:'int',n:1},{label:'(No PH) Qty',get:r=>r.noph_qty,f:'int',n:1},{label:'Qty Diff',get:r=>r.diff_qty,f:'int',n:1},
+    {label:'Report 1 Amazon Sales',get:r=>r.r1_sales,f:'gbp',n:1},{label:'PH Sales',get:r=>r.ph_sales,f:'gbp',n:1},{label:'(No PH) Sales',get:r=>r.noph_sales,f:'gbp',n:1},{label:'Sales Diff',get:r=>r.diff_sales,f:'gbp',n:1},
+    {label:'Report 4 Amazon Units',get:r=>r.r4_amazon,f:'int',n:1},{label:'PH Units',get:r=>r.ph_units,f:'int',n:1},{label:'(No PH) Units',get:r=>r.noph_units,f:'int',n:1},{label:'Units Diff',get:r=>r.diff_units,f:'int',n:1},
+    {label:'PHs with sales',get:r=>r.phs_with_sales,f:'int',n:1},{label:'Status',get:r=>r.status,f:'badge'}]});
+  table($('#tb-phval'),{rows:D.ph_valid,page:40,sort:[1,-1],cols:[{label:'PH',get:v=>v.ph},
+    {label:'Allocated ASINs',get:v=>v.allocated,f:'int',n:1},{label:'Matched (valid SKU)',get:v=>v.ok,f:'int',n:1},{label:'Matched + unmapped variant',get:v=>v.ok_variant,f:'int',n:1},
+    {label:'Missing valid SKU',get:v=>v.missing_sku,f:'int',n:1},{label:'Multiple SKUs',get:v=>v.multi_sku,f:'int',n:1},{label:'Not found in DB',get:v=>v.not_found,f:'int',n:1},
+    {label:'Allocated to >1 PH',get:v=>v.multi_ph,f:'int',n:1},
+    ...M.months.map(m=>({label:M.month_labels[m]+' ASINs sold',get:v=>v[m].asins,f:'int',n:1})),
+    {label:'Status',get:v=>v.ph==='(No PH)'?'Review':(v.missing_sku+v.multi_sku+v.not_found+v.multi_ph?'Review':'PASS'),f:'badge'}]});
+  const raws=[];M.months.forEach(m=>Object.entries(M.raw_info[m]).forEach(([mp,i])=>raws.push({m,mp,...i})));
+  table($('#tb-raw'),{rows:raws,search:false,page:100,cols:[{label:'Month',get:r=>M.month_labels[r.m]},{label:'Marketplace',get:r=>r.mp},
+    {label:'Origin',get:r=>r.origin==='stored'?'Read from stored raw file':'Pulled from DB this run'},{label:'Attempts',get:r=>r.attempts,f:'int',n:1},{label:'Raw file',get:r=>r.file||'NOT SAVED (no rows)'}]});
+  table($('#tb-scope'),{rows:D.scope.filter(r=>r.month===mo),page:100,sort:[3,-1],filters:[{label:'Marketplace',get:r=>r.marketplace},{label:'Region',get:r=>r.region}],cols:[
+    {label:'Marketplace',get:r=>r.marketplace},{label:'Region',get:r=>r.region},{label:'Order status',get:r=>r.status},{label:'Lines',get:r=>r.rows,f:'int',n:1},
+    {label:'Qty',get:r=>r.qty,f:'int',n:1},{label:'order_total (local currency)',get:r=>r.sales,f:'dec',n:1},
+    {label:'In report?',get:r=>r.region==='UK'&&r.status==='Completed'?'Yes':'No'}]});
+}
+
+const TABS=[['overview','Overview'],['amazon','Amazon'],['ebay','eBay'],['bq','B&Q'],['r4','Single SKU Units'],['ph','PH View'],['audit','Combo & Pack Audit'],['exc','Exceptions'],['recon','Reconciliation'],['scope','Scope & Assumptions']];
+$('#tabs').innerHTML=TABS.map(([k,l],i)=>`<button data-k="${k}" class="${i?'':'on'}">${esc(l)}</button>`).join('');
+$('#t-overview').classList.add('on');
+$('#tabs').onclick=e=>{const k=e.target.dataset.k;if(!k)return;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='t-'+k))};
+$('#month').innerHTML=M.months.slice().reverse().map(m=>`<option value="${m}">${M.month_labels[m]}${m===M.report_month?' (report month)':' (test month)'}</option>`).join('');
+$('#month').onchange=e=>{month=e.target.value;render()};
+$('#ph').innerHTML='<option value="">All PHs ('+M.ph.phs.length+')</option>'+[...M.ph.phs,'(No PH)'].map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');
+$('#ph').onchange=e=>{ph=e.target.value;render()};
+$('#cat').innerHTML='<option value="">All Categories</option>'+[...new Set(Object.values(D.sku_cat).map(v=>v[0]))].sort((a,b)=>a.localeCompare(b))
+  .map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+$('#cat').onchange=e=>{cat=e.target.value;render()};
+$('#tb-phsum').onclick=e=>{const tr=e.target.closest('tbody tr'),td=tr&&tr.querySelector('td');
+  if(td&&[...M.ph.phs,'(No PH)'].includes(td.textContent)){ph=td.textContent===ph?'':td.textContent;$('#ph').value=ph;render()}};
+
+$('#sources').innerHTML=[
+ 'Sales: <b>order_management_copy.public.order_transaction</b>. ID = <code>asin</code> (Amazon), <code>item_id</code> (eBay), <code>sku</code> (B&amp;Q, which has no product ID or barcode in this table). Quantity = <code>quantity</code>; Sales Amount = <code>order_total</code> (line total), per the skill rule <code>SUM(COALESCE(order_total,0))</code>.',
+ 'Scope: <code>order_status = \'Completed\'</code>, <code>market_place = \'UK\'</code>, <code>source_name</code> in AMAZON / EBAY / B&amp;Q, <code>order_date</code> within the calendar month. Amazon FBA and FBM are both included.',
+ 'Master (SKU → SKU Type, Pack Size, Combo Components): <b>public.inv_products</b> + <b>public.inv_product_combo</b> ('+fmtInt(M.master_rows)+' component rows, '+fmtInt(M.master_products)+' products). <code>pack_count</code> is a code decoded through <b>ledsone.inventory.product_pk</b> (1–9 = 1–9 units; letter codes: '+Object.entries(M.pack_codes).filter(([c])=>/[A-Z]/.test(c)).map(([c,q])=>c+'='+q).join(', ')+').',
+ 'SKU Type rule: combo if the SKU contains “+” or has more than one component; pack if its single component quantity is above 1; otherwise single. SKUs not in the master fall back to the PDF rules: “+” split (each part resolved via the master or an nPK suffix), or the nPK suffix on a base SKU that is in the master.',
+ 'Marketplace + ID lookup: if the sold SKU still does not resolve, <b>public.listing_data</b> is searched (UK, <code>wrong_sku = 0</code>, Amazon <code>ref_id</code> = ASIN, eBay <code>ref_id</code> = Item ID). The search uses ID + sold SKU first, then the ID alone. The <code>mapped_sku</code> must resolve in the product master and be the only target, otherwise the line is <i>ID found, mapping incomplete</i> or <i>Conflicting mapping</i>. Reports 1–3 still show the SKU as sold; the mapped product SKU is shown alongside it and used only for SKU Type, Pack Size and Report 4 units. Suffix variants (_AMN, _AMD, _T, _AML) are never stripped. B&amp;Q is not looked up, because its <code>ref_id</code> is the EAN, which the order lines do not carry.',
+ 'Cleaning: IDs are read as text (raw CSVs are never parsed as numbers), trimmed, and ASINs are uppercased. Exact duplicate lines (same order, ID, SKU, qty, total, price, timestamp and store) are removed and listed as exceptions.',
+ 'Raw extracts are stored once per month in <code>raw/&lt;YYYY-MM&gt;/Raw_Amazon.csv, Raw_eBay.csv, Raw_BQ.csv</code> and are never overwritten. Re-runs read the stored files.'
+].map(x=>`<li>${x}</li>`).join('');
+$('#assump').innerHTML=[
+ '<b>Master sheet column names:</b> no Google “Master Sheet” was found. The OMS product master is used instead. Its actual columns are <code>inv_products(id, sku, inventory_bool…)</code>, <code>inv_product_combo(product, inventory, pack_count)</code> and <code>product_pk(id, pack_char, pack_qty)</code>. The marketplace ID → SKU mapping is the SKU recorded on each order line by the OMS.',
+ '<b>Conflicting mappings:</b> on eBay one Item ID legitimately carries many variation SKUs, and on Amazon one ASIN can carry several seller SKUs (different stores, amzn.gr regrades). The listing identity used is therefore ID + seller SKU (skill rule: listing identity = sku + market_place + ss_name). Amazon ASINs with more than one SKU on correctly mapped lines are listed as <i>Review</i> exceptions and are not excluded. <i>Conflicting mapping</i> is raised when the listing_data lookup for an unmapped line finds more than one valid product SKU. <b>Please confirm.</b>',
+ '<b>Combo component quantities:</b> taken from <code>inv_product_combo</code> (for example X3PK+Y3PK gives 3 × X and 3 × Y). They are not assumed to be 1 each, because the master defines them. For “+” SKUs missing from the master, each part is resolved via the master or an nPK suffix. If any part cannot be resolved, the combo is kept in Reports 1–3 and left out of Report 4 (Combo without components), rather than adding unknown part names as single SKUs.',
+ '<b>nPK assumption:</b> verified against the master. Every nPK product maps to exactly one inventory SKU × n. Letter suffixes (APK=10, BPK=15 … SPK=25) are also pack sizes. A SKU ending in PK that is itself an inventory item in the master (for example CL3TIVAPK) is treated as a Single, per the master.',
+ '<b>Returns / cancellations:</b> only <code>Completed</code> lines are reported. Refunded, Cancelled/Canceled, Deleted and Pending lines are excluded as scope (see the table below). Partial refunds on Completed lines are not visible in this table. <b>Confirm per marketplace.</b>',
+ '<b>VAT / postage:</b> Sales Amount is <code>order_total</code> as supplied (VAT-inclusive UK marketplace price, including any postage the marketplace records on the line). No VAT is removed. <b>Confirm if VAT must be removed.</b>',
+ '<b>Currency / marketplace scope:</b> the PDF specifies GBP. Non-UK order lines are stored in local currency (EUR, USD, SEK…) and there is no FX table, so only UK marketplace sales are reported. Non-UK volumes are shown below for transparency. <b>Confirm whether EU/US sales (and their units for stock) must be added.</b>',
+ '<b>B&amp;Q ID:</b> order_transaction has no B&amp;Q product ID or barcode, so the B&amp;Q SKU is used as the ID.',
+ '<b>PH allocation (approved business assumption):</b> PH allocation is sourced from the authoritative DB Master / 3rd Cycle allocation (ledsone <code>staff.ph_category_products → ph_categories → users</code>, Amazon <code>source_id = 1</code>; identical to sheet tab “Master Amazon UK 3rd Cycle”), and the current allocation is applied consistently to June, July and August 2026 for this reporting requirement. The master carries a single <code>assign_date</code> ('+esc(M.ph.assign_dates.join(', '))+'), so no historical ownership is available. '+M.ph.phs.length+' PHs are supported ('+fmtInt(M.ph.asins)+' ASINs). “Master Amazon UK 4th Cycle” and “Amazon UK 4th Cycle TEMP” are not used, and no additional PHs have been invented (33 were expected; the authoritative source has '+M.ph.phs.length+').',
+ '<b>PH is an extra reporting dimension (Amazon only):</b> it is attached by ASIN to lines already in Report 1 and never changes Quantity Sold, Sales Amount, SKU mapping, pack/combo conversion or reconciliation. Amazon lines whose ASIN has no allocation stay in the totals under <b>(No PH)</b> and are listed as <i>No PH allocation</i> exceptions. eBay and B&amp;Q units are not attributed to PHs (no approved PH mapping exists for them); in the PH view of Single SKU Units they are shown as the SKU’s unchanged all-marketplace figures.',
+ '<b>PH ASIN checks:</b> every allocated ASIN is checked against UK Amazon <code>listing_data</code> (<code>wrong_sku = 0</code>) and the product master: '+Object.entries(M.ph.status_counts).map(([k,v])=>esc(k)+' '+fmtInt(v)).join(' · ')+'. Non-OK ASINs are listed as exceptions (allocation checks only; no effect on sales). A <i>PH/SKU mapping conflict</i> flags a sold line whose SKU is none of its ASIN’s valid listing SKUs; it stays under that PH for review (see decision D6: review pair by pair).',
+ '<b>Delivery items not built here:</b> Google Sheet tabs, the 2nd-of-month 06:00 schedule, and the email alert and distribution. This build is a standalone HTML report. The “retry twice” rule is implemented in the extract; the email alert is not configured.'
+].map(x=>`<li>${x}</li>`).join('');
+render();
+</script>
+</body>
+</html>

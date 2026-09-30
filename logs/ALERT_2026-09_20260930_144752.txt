@@ -1,0 +1,12 @@
+PRODUCT PERFORMANCE AUTOMATION - FAILED - NOT DISTRIBUTED AS A SUCCESSFUL REPORT
+Timestamp: 2026-09-30T14:47:52
+Affected Month: 2026-09
+Stage: preflight
+Error: [preflight] RuntimeError: 2026-09 is not a completed month (today 2026-09-30) - partial months are never processed
+Root Cause: 2026-09 is not a completed month (today 2026-09-30) - partial months are never processed
+Impact: no report delivered for this month; previous validated dashboard stays live
+Affected Marketplace: all
+Affected Records:
+  - RuntimeError: 2026-09 is not a completed month (today 2026-09-30) - partial months are never processed
+Proposed Fix: fix the cause above and re-run: python run.py --month 2026-09
+Validation Required: all 15 checks PASS and reconciliation PASS

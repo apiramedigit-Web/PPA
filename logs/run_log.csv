@@ -1,0 +1,6 @@
+run_date,run_id,trigger,reporting_month,amazon_status,ebay_status,bq_status,mapping_status,report_status,exception_status,reconciliation_status,history_status,sheet_status,dashboard_status,delivery_status,overall_status,error,timestamp
+2026-09-30,20260930_144459,test (dry-run),2026-06,PASS,PASS,PASS,PASS,PASS,PASS,PASS,APPENDED 6259 rows,NOT CONFIGURED (workbook Product_Performance_2026-06.xlsx written),BUILT,SKIPPED (dry-run),PASS,,2026-09-30T14:45:41
+2026-09-30,20260930_144550,test (dry-run),2026-07,PASS,PASS,PASS,PASS,PASS,PASS,PASS,APPENDED 6147 rows,NOT CONFIGURED (workbook Product_Performance_2026-07.xlsx written),BUILT,SKIPPED (dry-run),PASS,,2026-09-30T14:46:23
+2026-09-30,20260930_144624,test (dry-run),2026-08,PASS,PASS,PASS,PASS,PASS,PASS,PASS,APPENDED 6462 rows,NOT CONFIGURED (workbook Product_Performance_2026-08.xlsx written),BUILT,SKIPPED (dry-run),PASS,,2026-09-30T14:46:48
+2026-09-30,20260930_144719,test (dry-run),2026-08,PASS,PASS,PASS,PASS,PASS,PASS,PASS,ALREADY PRESENT - identical,NOT CONFIGURED (workbook Product_Performance_2026-08.xlsx written),BUILT,SKIPPED (dry-run),PASS,,2026-09-30T14:47:51
+2026-09-30,20260930_144752,test,2026-09,,,,,,,,,,,,FAILED,[preflight] RuntimeError: 2026-09 is not a completed month (today 2026-09-30) - partial months are never processed,2026-09-30T14:47:52
